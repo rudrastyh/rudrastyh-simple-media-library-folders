@@ -4,7 +4,7 @@
  * Description: The plugin allows you to organize the WordPress media library in folders
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Version: 1.8
+ * Version: 1.8.1
  * Domain Path: /languages
  * Text Domain: rudrastyh-simple-media-library-folders
  * License: GPL v2 or later
@@ -109,81 +109,37 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 		public function get_media_count( $post_type = 'attachment' ) {
 			global $wpdb;
 
-			if( 'attachment' === $post_type && $this->is_use_network_library() ) {
-				// is network media
-				return $wpdb->get_var(
-					$wpdb->prepare(
-						"
-						SELECT COUNT(p.ID)
-						FROM {$wpdb->posts} p
-						LEFT JOIN {$wpdb->base_prefix}network_media_placeholders pl
-							ON p.ID = pl.placeholder_id
-							AND pl.library_id = %d
-							AND pl.blog_id = %d
-						WHERE p.post_type = 'attachment'
-						AND pl.placeholder_id IS NULL
-						",
-						Rudr_Multisite_Shared_Media::get_network_library_id(),
-						get_current_blog_id()
-					)
-				);
-			} else {
-				return $wpdb->get_var(
-					$wpdb->prepare(
-						"
-						SELECT COUNT(ID)
-						FROM {$wpdb->posts}
-						WHERE post_type = %s
-						AND post_status != 'auto-draft'
-						",
-						$post_type
-					)
-				);
-			}
+			return $wpdb->get_var(
+				$wpdb->prepare(
+					"
+					SELECT COUNT(ID)
+					FROM {$wpdb->posts}
+					WHERE post_type = %s
+					AND post_status != 'auto-draft'
+					",
+					$post_type
+				)
+			);
 		}
 
 		public function get_media_without_folders_count( $post_type = 'attachment' ) {
 			global $wpdb;
 
-			if( 'attachment' === $post_type && $this->is_use_network_library() ) {
-				return $wpdb->get_var(
-					$wpdb->prepare(
-						"
-						SELECT COUNT(p.ID)
-						FROM {$wpdb->posts} p
-						LEFT JOIN {$wpdb->term_relationships} tr
-							ON p.ID = tr.object_id
-							AND tr.term_taxonomy_id IN (SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s )
-						LEFT JOIN {$wpdb->base_prefix}network_media_placeholders pl
-							ON p.ID = pl.placeholder_id
-							AND pl.library_id = %d
-							AND pl.blog_id = %d
-						WHERE p.post_type = 'attachment'
-						AND tr.object_id IS NULL
-						AND pl.placeholder_id IS NULL
-						",
-						self::TAXONOMY_NAME,
-						Rudr_Multisite_Shared_Media::get_network_library_id(),
-						get_current_blog_id()
-					)
-				);
-			} else {
-				return $wpdb->get_var(
-					$wpdb->prepare(
-						"
-						SELECT COUNT(p.ID)
-						FROM {$wpdb->posts} p
-						LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-						AND tr.term_taxonomy_id IN (SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s )
-						WHERE p.post_type = %s
-						AND tr.object_id IS NULL
-						AND p.post_status != 'auto-draft'
-						",
-						( 'attachment' === $post_type ? self::TAXONOMY_NAME : self::TAXONOMY_NAME . '_' . $post_type ),
-						$post_type
-					)
-				);
-			}
+			return $wpdb->get_var(
+				$wpdb->prepare(
+					"
+					SELECT COUNT(p.ID)
+					FROM {$wpdb->posts} p
+					LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+					AND tr.term_taxonomy_id IN (SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s )
+					WHERE p.post_type = %s
+					AND tr.object_id IS NULL
+					AND p.post_status != 'auto-draft'
+					",
+					( 'attachment' === $post_type ? self::TAXONOMY_NAME : self::TAXONOMY_NAME . '_' . $post_type ),
+					$post_type
+				)
+			);
 
 		}
 
@@ -194,41 +150,18 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 			$term_ids = $child_folders ? wp_list_pluck( $child_folders, 'term_id' ) : array();
 			$term_ids[] = $parent_folder_id;
 
-			if( $this->is_use_network_library() ) {
-				return $wpdb->get_var(
-					$wpdb->prepare(
-						"
-						SELECT COUNT(p.ID)
-						FROM {$wpdb->posts} p
-						LEFT JOIN {$wpdb->term_relationships} tr
-							ON p.ID = tr.object_id
-						LEFT JOIN {$wpdb->base_prefix}network_media_placeholders pl
-							ON p.ID = pl.placeholder_id
-							AND pl.library_id = %d
-							AND pl.blog_id = %d
-						WHERE tr.term_taxonomy_id IN (%s)
-						AND p.post_type = 'attachment'
-						AND pl.placeholder_id IS NULL
-						",
-						Rudr_Multisite_Shared_Media::get_network_library_id(),
-						get_current_blog_id(),
-						join( ',', $term_ids )
-					)
-				);
-			} else {
-				return $wpdb->get_var(
-					$wpdb->prepare(
-						"
-						SELECT COUNT(p.ID)
-						FROM {$wpdb->posts} p
-						LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-						WHERE tr.term_taxonomy_id IN (%s)
-						AND p.post_type = 'attachment'
-						",
-						join( ',', $term_ids )
-					)
-				);
-			}
+			return $wpdb->get_var(
+				$wpdb->prepare(
+					"
+					SELECT COUNT(p.ID)
+					FROM {$wpdb->posts} p
+					LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+					WHERE tr.term_taxonomy_id IN (%s)
+					AND p.post_type = 'attachment'
+					",
+					join( ',', $term_ids )
+				)
+			);
 
 		}
 
@@ -313,83 +246,6 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 			return $is_current_child_folder;
 		}
 
-		private function get_default_folder_slug() {
-
-			$previously_selected = get_option( '_smlf_previously_selected' );
-			if( 'yes' === $previously_selected && ( $previously_selected_folder_slug = get_user_meta( get_current_user_id(), '_prev_folder_slug', true ) ) ) {
-				$default_folder_slug = $previously_selected_folder_slug;
-			} else {
-				$default_folder_slug = get_option( '_smlf_default_folder' );
-			}
-
-			return $default_folder_slug;
-		}
-
-		private function is_default_folder( $term ) {
-
-			$slug = is_a( $term, 'WP_Term' ) ? $term->slug : $term;
-
-			return $this->get_default_folder_slug() === $slug;
-
-		}
-
-		private function is_default_child_folder( $terms, $args = array() ) {
-			$is_default_child_folder = false;
-
-			$default_folder_slug = $this->get_default_folder_slug();
-			if( ! $default_folder_slug ) {
-				return $is_default_child_folder;
-			}
-
-			if( $terms ) {
-				foreach( $terms as $term ) {
-					if( $this->is_default_folder( $term ) ) {
-						$is_default_child_folder = true;
-						break;
-					}
-					// 3-level support for list view
-					if( 2 === $args[ 'depth' ] && ( $child_terms = get_terms(
-						array(
-							'taxonomy' => self::TAXONOMY_NAME,
-							'hide_empty' => false,
-							'orderby' => 'name',
-							'order' => 'ASC',
-							'parent' => $term->term_id,
-						)
-					) ) ) {
-						foreach( $child_terms as $child_term ) {
-							if( $this->is_default_folder( $child_term ) ) {
-								$is_default_child_folder = true;
-								break;
-							}
-						}
-					}
-				}
-			}
-			return $is_default_child_folder;
-		}
-
-		public function is_use_network_library() {
-
-			if(
-				is_multisite() 
-				&& class_exists( 'Rudr_Multisite_Shared_Media' )
-				&& get_current_blog_id() !== Rudr_Multisite_Shared_Media::get_network_library_id()
-			) {
-				return true;
-			} else {
-				return false;
-			}
-
-		}
-
-		public function network_library_type() {
-			if( ! class_exists( 'Rudr_Multisite_Shared_Media' ) ) {
-				return false;
-			}
-			return get_site_option( 'rudr_sml_type', 'sharedtab' );
-		}
-
 		public function get_folders() {
 
 			$terms = get_terms(
@@ -401,21 +257,6 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 				)
 			);
 			return $terms;
-		}
-
-		public function get_network_folders() {
-			if( ! class_exists( 'Rudr_Multisite_Shared_Media' ) ) {
-				return array();
-			}
-
-			Rudr_Multisite_Shared_Media::switch_to_network_library();
-
-			$terms = $this->get_folders();
-
-			restore_current_blog();
-
-			return $terms;
-
 		}
 
 		public function filter_query_folders( $query ) { 
@@ -483,16 +324,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 				'deletefolderconfirmtext' => __( "You are about to permanently delete this folder from your site.\nThis action cannot be undone.\n'Cancel' to stop, 'OK' to delete.", 'rudrastyh-simple-media-library-folders' ),
 			);
 
-			if( $this->is_use_network_library() ) {
-				 if( 'replaced' === $this->network_library_type() ) {
-					 $script_data[ 'folders' ] = $this->get_network_folders();
-				 } else {
-					 $script_data[ 'folders' ] = $this->get_folders();
-					 $script_data[ 'networkFolders' ] = $this->get_network_folders();
-				 }
-			} else {
-				$script_data[ 'folders' ] = $this->get_folders();
-			}
+			$script_data[ 'folders' ] = $this->get_folders();
 
 			wp_localize_script( 'smlf-media-category', 'SMLFMediaFoldersData', $script_data );
 
@@ -515,7 +347,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 		public function options_fields() {
 
 			$show_count = get_option( '_smlf_show_count', 'both' );
-			$show_search = get_option( '_smlf_show_search' );
+			$show_search = get_option( '_smlf_show_search', 'yes' );
 
 			?><div class="wrap">
 				<h1><?php esc_html_e( 'Media Library Folders Settings', 'rudrastyh-simple-media-library-folders' ) ?></h1>
@@ -1037,8 +869,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 
 			$taxonomy_name = str_starts_with( $screen->id, 'edit-' ) ? self::TAXONOMY_NAME . '_' . $screen->post_type : self::TAXONOMY_NAME;
 			$sidebar_width = ( $sidebar_width = get_user_meta( get_current_user_id(), '_smlf_sb_width', true ) ) ? (int) $sidebar_width : 320;
-			$default_folder_slug = str_starts_with( $screen->id, 'edit-' ) ? false : $this->get_default_folder_slug();
-			$folder_actions_class = ( 'grid' === $mode || ! $this->is_folder_selected( $taxonomy_name ) ) && ( ! $default_folder_slug || -1 == $default_folder_slug ) ? ' smlf-disabled' : '';
+			$folder_actions_class = ( 'grid' === $mode || ! $this->is_folder_selected( $taxonomy_name ) ) ? ' smlf-disabled' : '';
 
 			?>
 			<div id="smlf-sidebar" class="smlf-sidebar" data-show_count="<?php echo esc_attr( $show_count ) ?>" data-taxonomy="<?php echo esc_html( $taxonomy_name ) ?>" style="width:<?php echo absint( $sidebar_width ) ?>px">
@@ -1137,24 +968,22 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 					'All %s',
 					mb_strtolower( $post_type_object->labels->name )
 				);
-				$default_folder_slug = '';
 			} else {
 				$post_type_name = 'attachment';
 				$all_items_text = __( 'All files', 'rudrastyh-simple-media-library-folders' );
-				$default_folder_slug = $this->get_default_folder_slug();
 			}
 			?>
 			<div class="smlf-sidebar__navigation">
 				<ul class="folders-toplevel folders-toplevel--main-nav">
 					<?php if( 'grid' === $mode ) : ?>
-						<li><span class="folder-nav folder-nav--all_files<?php if( ! $default_folder_slug ) : ?> current<?php endif; ?> dashicons-before"><?php echo esc_html( $all_items_text ) ?> <?php if( 'no' !== $show_count ) : ?><span class="folder-nav__count"><?php echo absint( $this->get_media_count( $post_type_name ) ) ?></span><?php endif; ?></span></li>
-						<li><span class="folder-nav<?php if( -1 == $default_folder_slug ) : ?> current<?php endif; ?> dashicons-before" data-id="0"><?php esc_html_e( 'Uncategorized', 'rudrastyh-simple-media-library-folders' ) ?> <?php if( 'no' !== $show_count ) : ?><span class="folder-nav__count"><?php echo absint( $this->get_media_without_folders_count( $post_type_name ) ) ?></span><?php endif; ?></span></li>
+						<li><span class="folder-nav folder-nav--all_files current dashicons-before"><?php echo esc_html( $all_items_text ) ?> <?php if( 'no' !== $show_count ) : ?><span class="folder-nav__count"><?php echo absint( $this->get_media_count( $post_type_name ) ) ?></span><?php endif; ?></span></li>
+						<li><span class="folder-nav dashicons-before" data-id="0"><?php esc_html_e( 'Uncategorized', 'rudrastyh-simple-media-library-folders' ) ?> <?php if( 'no' !== $show_count ) : ?><span class="folder-nav__count"><?php echo absint( $this->get_media_without_folders_count( $post_type_name ) ) ?></span><?php endif; ?></span></li>
 					<?php else : ?>
 						<li><?php
 							printf(
 								'<a href="%s" class="folder-nav folder-nav--all_files %s dashicons-before">%s %s</a></li>',
 								esc_attr( add_query_arg( array( 'taxonomy' => $taxonomy_name, 'term' => 'all' ) ) ),
-								( ! $default_folder_slug && $this->url_params_not_set( $taxonomy_name ) || $this->is_current_folder( 'all', $taxonomy_name ) ? 'current' : '' ),
+								( $this->url_params_not_set( $taxonomy_name ) || $this->is_current_folder( 'all', $taxonomy_name ) ? 'current' : '' ),
 								esc_html( $all_items_text ),
 								( 'no' !== $show_count ? '<span class="folder-nav__count">' . absint( $this->get_media_count( $post_type_name ) ) . '</span>' : '' )
 							)
@@ -1163,7 +992,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 							printf(
 								'<a href="%s" class="folder-nav %s dashicons-before" data-id="0">%s %s</a></li>',
 								esc_attr( add_query_arg( array( 'taxonomy' => $taxonomy_name, 'term' => 'uncategorized' ) ) ),
-								( -1 == $default_folder_slug && $this->url_params_not_set( $taxonomy_name ) || $this->is_current_folder( 'uncategorized', $taxonomy_name ) ? 'current' : '' ),
+								( $this->is_current_folder( 'uncategorized', $taxonomy_name ) ? 'current' : '' ),
 								esc_html__( 'Uncategorized', 'rudrastyh-simple-media-library-folders' ),
 								( 'no' !== $show_count ? '<span class="folder-nav__count">' . absint( $this->get_media_without_folders_count( $post_type_name ) ) . '</span>' : '' )
 							)
@@ -1229,7 +1058,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 
 		private function print_folder_search() {
 
-			if( 'yes' !== get_option( '_smlf_show_search' ) ) {
+			if( 'yes' !== get_option( '_smlf_show_search', 'yes' ) ) {
 				return;
 			}
 
@@ -1252,7 +1081,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 		private function prepare_folder_tree( $folder, $tree, $args ) {
 
 			$href = 'a' === $args[ 'tag' ] ? ' href="' . esc_attr( add_query_arg( array( 'taxonomy' => $folder->taxonomy, 'term' => $folder->slug ) ) ) . '"' : '';
-			$current_class = ( 'grid' !== $args[ 'mode' ] && ( $this->is_current_folder( $folder ) || $this->url_params_not_set( $folder->taxonomy ) && $this->is_default_folder( $folder ) ) ) || ( 'grid' === $args[ 'mode' ] && $this->is_default_folder( $folder ) ) ? ' current' : '';
+			$current_class = ( 'grid' !== $args[ 'mode' ] && $this->is_current_folder( $folder ) ) ? ' current' : '';
 
 			$tree[ $folder->term_id ] = array(
 				'id' => $folder->term_id,
@@ -1360,10 +1189,6 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 					|| (
 						'grid' !== $args[ 'mode' ]
 						&& $this->is_current_folder( $tree[ $child_folder_id ][ 'slug' ], $tree[ $child_folder_id ][ 'taxonomy' ] )
-					)
-					|| (
-						$this->url_params_not_set( $tree[ $child_folder_id ][ 'taxonomy' ] )
-						&& $this->is_default_folder( $tree[ $child_folder_id ][ 'slug' ], $tree[ $child_folder_id ][ 'taxonomy' ] )
 					)
 				) {
 					$tree[ $folder_id ][ 'is_open' ] = true;
