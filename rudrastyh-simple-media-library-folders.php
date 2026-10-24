@@ -4,7 +4,7 @@
  * Description: The plugin allows you to organize the WordPress media library in folders
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Version: 1.8.1
+ * Version: 1.9
  * Domain Path: /languages
  * Text Domain: rudrastyh-simple-media-library-folders
  * License: GPL v2 or later
@@ -348,6 +348,8 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 
 			$show_count = get_option( '_smlf_show_count', 'both' );
 			$show_search = get_option( '_smlf_show_search', 'yes' );
+			$show_in_admin_menu = get_option( '_smlf_show_in_admin_menu' );
+			$allow_svg = get_option( '_smlf_allow_svg' );
 
 			?><div class="wrap">
 				<h1><?php esc_html_e( 'Media Library Folders Settings', 'rudrastyh-simple-media-library-folders' ) ?></h1>
@@ -485,7 +487,13 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 							<tr valign="top">
 								<th scope="row"><?php esc_html_e( 'Show Search', 'rudrastyh-simple-media-library-folders' ) ?></th>
 								<td>
-									<label><input type="checkbox" name="show_search" <?php checked( 'yes', $show_search ) ?>>&nbsp;<?php esc_html_e( 'Yes', 'rudrastyh-simple-media-library-folders' ) ?></label>
+									<label><input type="checkbox" name="show_search" <?php checked( 'yes', $show_search ) ?>>&nbsp;<?php esc_html_e( 'Yes' ) ?></label>
+								</td>
+							</tr>
+							<tr valign="top">
+								<th scope="row"><?php esc_html_e( 'Show in Admin Menu', 'rudrastyh-simple-media-library-folders' ) ?></th>
+								<td>
+									<label><input type="checkbox" name="show_in_admin_menu" <?php checked( 'yes', $show_in_admin_menu ) ?>>&nbsp;<?php esc_html_e( 'Yes' ) ?></label>
 								</td>
 							</tr>
 							<tr valign="top">
@@ -519,6 +527,13 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 									</fieldset>
 								</td>
 							</tr>
+							<tr valign="top">
+								<th scope="row"><?php esc_html_e( 'Allow SVG Uploads', 'rudrastyh-simple-media-library-folders' ) ?></th>
+								<td>
+									<label><input type="checkbox" name="allow_svg" <?php checked( 'yes', $allow_svg ) ?>>&nbsp;<?php esc_html_e( 'Yes' ) ?></label>
+									<p class="description"><?php esc_html_e( 'Allow SVG uploads and sanitization.', 'rudrastyh-simple-media-library-folders' ) ?></p>
+								</td>
+							</tr>
 						</table>
 						<?php submit_button(); ?>
 					<?php endif; ?>
@@ -537,6 +552,12 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 
 			$show_search = ! empty( $_POST[ 'show_search' ] ) && 'on' == $_POST[ 'show_search' ] ? 'yes' : 'no';
 			update_option( '_smlf_show_search', $show_search );
+
+			$show_in_admin_menu = ! empty( $_POST[ 'show_in_admin_menu' ] ) && 'on' == $_POST[ 'show_in_admin_menu' ] ? 'yes' : 'no';
+			update_option( '_smlf_show_in_admin_menu', $show_in_admin_menu );
+			
+			$allow_svg = ! empty( $_POST[ 'allow_svg' ] ) && 'on' == $_POST[ 'allow_svg' ] ? 'yes' : 'no';
+			update_option( '_smlf_allow_svg', $allow_svg );
 
 			wp_safe_redirect(
 				add_query_arg(
@@ -578,6 +599,8 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 		}
 
 		public function init() {
+			
+			$show_ui = ( 'yes' === get_option( '_smlf_show_in_admin_menu' ) ) ? true : false;
 
 			register_taxonomy(
 				self::TAXONOMY_NAME,
@@ -597,7 +620,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 						'new_item_name'     => __( 'New Folder Name', 'rudrastyh-simple-media-library-folders' ),
 						'menu_name'         => __( 'Folders', 'rudrastyh-simple-media-library-folders' ),
 					),
-					'show_ui'           => true,
+					'show_ui'           => $show_ui,
 					'show_admin_column' => true,
 					'show_in_nav_menus' => false,
 					'query_var'         => true,
@@ -897,7 +920,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 			<div class="smlf-modal" id="add-edit-folder" style="display:none;">
 
 					<div class="smlf-modal__topbar">
-						<h1><?php esc_html_e( 'Edit Folder', 'rudr-simple-media-library-folders' ) ?></h1>
+						<h1><?php esc_html_e( 'Edit Folder', 'rudrastyh-simple-media-library-folders' ) ?></h1>
 						<button class="smlf-modal__close dashicons dashicons-no-alt">
 							<span class="screen-reader-text"><?php esc_html_e( 'Close modal panel', 'rudrastyh-simple-media-library-folders' ) ?></span>
 						</button>
@@ -1068,7 +1091,7 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 		private function print_add_folder_form() {
 			?><li id="folder-add-wrap">
 				<form id="folder-add" class="folder-add dashicons-before">
-					<input type="text" name="folder_name" placeholder="<?php esc_attr_e( 'New Folder Name', 'rudr-simple-media-library-folders' ) ?>" />
+					<input type="text" name="folder_name" placeholder="<?php esc_attr_e( 'New Folder Name', 'rudrastyh-simple-media-library-folders' ) ?>" />
 					<input type="hidden" name="folder_parent" value="-1" />
 					<span class="folder-add__buttons">
 						<button type="button" class="button smlf-close-quick-add-form"><?php _e( 'Cancel' ) ?></button>
@@ -2217,3 +2240,4 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 }
 
 require_once( __DIR__ . '/classes/class-smlf-term-list-walker.php' );
+require_once( __DIR__ . '/classes/class-smlf-allow-svg.php' );

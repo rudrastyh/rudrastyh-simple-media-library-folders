@@ -3,7 +3,7 @@ Contributors: rudrastyh
 Tags: folders, media folder, media library folders, WordPress media library folders
 Requires at least: 5.0
 Tested up to: 7.1
-Stable tag: 1.8.1
+Stable tag: 1.9
 Requires PHP: 7.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -23,6 +23,7 @@ Simple Media Library Folders allows you to create folders in the WordPress media
 ✅ Sorting folders in a custom order using drag and drop
 ✅ No annoying notifications
 ✅ The plugin does not affect your site performance in any way
+✅ Secure SVG uploads
 ✅ One-click import from other plugins (currently available are: Filebird, HappyFiles, Real Media Library, Wicked Folders, WP Media Folder by Joomunited, and Folders by Premio)
 
 = Pro features =
@@ -98,6 +99,10 @@ You need to deactivate the Lite version of the plugin, then to install and activ
 Yes, the Simple Media Library Folders plugin is GDPR compliant. The plugin neither collects or sends data from your website anywhere.
 
 == Changelog ==
+
+= 1.9 =
+* Added: It is now possible to hide Media > Folders taxonomy page in the plugin settings
+* Added: SVG uploads with sanitization can be allowed in settings
 
 = 1.8.1 =
 * Fixed: An issue when drag and drop folder sorting was not working when the search is hidden in the plugin settings
