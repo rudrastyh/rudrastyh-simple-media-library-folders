@@ -4,7 +4,7 @@
  * Description: The plugin allows you to organize the WordPress media library in folders
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Version: 1.9
+ * Version: 1.9.1
  * Domain Path: /languages
  * Text Domain: rudrastyh-simple-media-library-folders
  * License: GPL v2 or later
@@ -1507,10 +1507,6 @@ if( ! class_exists( 'SMLF_Simple_Media_Library_Folders' ) ) {
 			global $wpdb;
 
 			check_ajax_referer( 'del_folder' );
-
-			if( ! current_user_can( 'edit_folders' ) ) {
-				wp_send_json_error( array( 'message' => __( 'You need a higher level of permission.' ) ) );
-			}
 
 			$folders_order = isset( $_POST[ 'folders_order' ] ) ? $_POST[ 'folders_order' ] : array();
 			

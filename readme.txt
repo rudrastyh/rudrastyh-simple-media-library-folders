@@ -1,9 +1,9 @@
 === Simple Media Library Folders ===
 Contributors: rudrastyh
-Tags: folders, media folder, media library folders, WordPress media library folders
+Tags: media folder, media library categories, media library folder, media library folders, WordPress media library folders
 Requires at least: 5.0
 Tested up to: 7.1
-Stable tag: 1.9
+Stable tag: 1.9.1
 Requires PHP: 7.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -99,6 +99,9 @@ You need to deactivate the Lite version of the plugin, then to install and activ
 Yes, the Simple Media Library Folders plugin is GDPR compliant. The plugin neither collects or sends data from your website anywhere.
 
 == Changelog ==
+
+= 1.9.1 = 
+* Fixed: An issue when drag and drop folder sorting was not working for some user roles
 
 = 1.9 =
 * Added: It is now possible to hide Media > Folders taxonomy page in the plugin settings
