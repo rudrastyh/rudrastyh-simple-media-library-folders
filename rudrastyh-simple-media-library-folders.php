@@ -4,7 +4,7 @@
  * Description: The plugin allows you to organize the WordPress media library in folders
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Version: 1.9.1
+ * Version: 1.9.2
  * Domain Path: /languages
  * Text Domain: rudrastyh-simple-media-library-folders
  * License: GPL v2 or later
